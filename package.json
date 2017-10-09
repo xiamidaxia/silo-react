@@ -17,7 +17,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/xiamidaxia/silo/tree/master/packages/silo-react"
+    "url": "https://github.com/xiamidaxia/silo-react"
   },
   "entry": {
     "index": "./src/index.js"

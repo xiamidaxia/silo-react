@@ -88,3 +88,22 @@ store.createPath('myPath', {
 })
 expect(store.exec('action:myPath/act1')).toEqual(['myPath', 'act1', 'act2', 'act3'])
 ```
+
+## Inject context arguments
+
+```jsx
+const store = createSiloStore()
+store.injectArgs(() => {
+  return {
+    myContext: { /* my context */}
+  }
+})
+
+store.createPath('myPath', {
+  actions: {
+    act({ myContext }) {
+       console.log(myContext) // my context
+    }
+  }
+})
+```
