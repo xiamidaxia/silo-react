@@ -10,6 +10,7 @@
     "test": "make test",
     "test:watch": "make test-watch",
     "test:cover": "make test-cover",
+    "coveralls": "make test-cover && cat ./coverage/lcov.info | coveralls",
     "prepublish": "make build",
     "autod": "autod",
     "lint": "make lint"
@@ -41,6 +42,7 @@
     "babel-plugin-transform-decorators-legacy": "^1.3.4",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-preset-env": "^1.6.0",
+    "coveralls": "^3.0.0",
     "dora": "^0.4.5",
     "dora-plugin-hmr": "^0.7.1",
     "dora-plugin-livereload": "^0.6.0",
