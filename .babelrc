@@ -1,0 +1,15 @@
+{
+  "presets": [
+    "react",
+    [ "env", {
+      "targets": {
+        "ie": 9
+      },
+      "useBuiltIns": "usage"
+    }]
+  ],
+  "plugins": [
+    "transform-decorators-legacy",
+    ["transform-object-rest-spread", { "useBuiltIns": true }]
+  ]
+}

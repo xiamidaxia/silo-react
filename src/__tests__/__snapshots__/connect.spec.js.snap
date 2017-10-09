@@ -1,0 +1,33 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`connect create connect 1`] = `
+<div>
+  <span>
+    count: 
+    0
+    : 
+    0
+  </span>
+  <button
+    onClick={[Function]}
+  >
+    button
+  </button>
+</div>
+`;
+
+exports[`connect create connect 2`] = `
+<div>
+  <span>
+    count: 
+    1
+    : 
+    1
+  </span>
+  <button
+    onClick={[Function]}
+  >
+    button
+  </button>
+</div>
+`;

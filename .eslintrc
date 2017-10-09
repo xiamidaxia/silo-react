@@ -1,0 +1,29 @@
+{
+  "extends": "eslint-config-airbnb",
+  "parser": "babel-eslint",
+  "env": {
+    "browser": true,
+    "mocha": true,
+    "node": true,
+    "jest": true,
+    "es6": true
+  },
+  "rules": {
+    "semi": [2, "never"], // 不加冒号
+    "default-case": 0, // 可以不加default-case
+    "no-underscore-dangle": 0,
+    "comma-dangle": ["error", "always-multiline"],
+    "no-param-reassign": 0, // 函数参数允许重新修改
+    "class-methods-use-this": 0, // 允许类方法内不使用 this
+    "max-len":0, // 单行没有字数限制
+    "no-case-declarations": 0, // 允许 switch case: 后不加{}
+    "no-plusplus": 0, // 允许加加
+    "no-mixed-operators": 0, // 允许 + 号和 - 号混用
+    "import/no-extraneous-dependencies": 0, // dep依赖检测暂时去掉，因为morpha扩展包package.json里声明
+    "import/prefer-default-export": 0,
+    "react/jsx-filename-extension": 0, // 文件扩展名是否为js不检测
+    "react/forbid-prop-types": 0, // react proptypes 类型检测去掉，代码里太多object类
+    "react/jsx-no-bind": 0, // 允许使用双冒号
+    "jsx-a11y/no-static-element-interactions": 0 // 允许element添加原生事件
+  }
+}
