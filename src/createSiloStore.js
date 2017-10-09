@@ -44,11 +44,11 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
   function getArgs(path, all) {
     /* eslint-disable no-use-before-define */
     return all ? {
-      ...injectArgsFn(),
+      ...injectArgsFn(path),
       state: getState()[path],
       ...methods[path],
     } : {
-      ...injectArgsFn(),
+      ...injectArgsFn(path),
       state: getState()[path],
       getters: methods[path].getters,
     }
