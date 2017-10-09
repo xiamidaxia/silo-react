@@ -1,17 +1,14 @@
+/* eslint-disable */
 import React, { Component } from 'react'
 import ReactDOM from 'react-dom'
+import { createSiloStore, Provider, connect } from '../src/'
 
-/* eslint-disable */
-export default class Main extends Component {
-  static propTypes = {
-  }
-  render() {
-    return (
-      <div className="container">
-        Hello World!
-      </div>
-    )
-  }
-}
+const store = createSiloStore()
+
+
+ReactDOM.render(
+  <Provider store={store}>
+  </Provider>
+)
 
 ReactDOM.render(<Main />, document.getElementById('__content'))
