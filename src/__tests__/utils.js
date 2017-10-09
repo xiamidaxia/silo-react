@@ -1,6 +1,6 @@
 export function addTestPath(store) {
   store.createPath('test', {
-    state: {
+    initialState: {
       count: 0,
     },
     getters: {
@@ -29,6 +29,6 @@ export function addTestPath(store) {
 
 export function addEmptyPath(store) {
   store.createPath('empty', {
-    state: {},
+    initialState: {},
   })
 }

@@ -14,14 +14,17 @@ const execMap = {
   action: 'actions',
 }
 
+const defaultInjectArgsFn = () => {}
+
 export default function createSiloStore(initData = {}, createStore = reduxCreateStore) {
   if (typeof initData !== 'object') {
     throw new Error('InitData must be an object.')
   }
   const methods = {}
   const settersMap = {}
+  let injectArgsFn = defaultInjectArgsFn
   function assertPath(path) {
-    if (!settersMap[path]) throw new Error(`Unknown path ${path}.`)
+    if (!methods[path]) throw new Error(`Unknown path ${path}.`)
   }
   function normalizeType(str) {
     str = str.split(SPLITER)
@@ -40,9 +43,11 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
   function getArgs(path, all) {
     /* eslint-disable no-use-before-define */
     return all ? {
+      ...injectArgsFn(),
       state: getState()[path],
       ...methods[path],
     } : {
+      ...injectArgsFn(),
       state: getState()[path],
       getters: methods[path].getters,
     }
@@ -72,8 +77,20 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
     return store
   }
 
+  function createStackActions(path, actions) {
+    const injectStackArgs = (stack, parentAction) => {
+      const injectArgs = getArgs(path, true)
+      return {
+        ...injectArgs,
+        __actionStack: stack.concat(parentAction),
+        actions: mapValues(methods[path].actions, (fn, name) => (...args) => batchedUpdates(() => fn(injectStackArgs(stack, name), ...args)))
+      }
+    }
+    return mapValues(actions, (fn, name) => (...args) => batchedUpdates(() => fn(injectStackArgs([path], name), ...args)))
+  }
+
   // create redux store
-  const { dispatch, subscribe, getState } = createStore((store, action) => {
+  const { dispatch, getState, ...others } = createStore((store, action) => {
     switch (action.type) {
       case ActionTypes.UPDATE_PATH:
         return updatePathReducer(store, action)
@@ -85,13 +102,16 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
   }, initData)
 
   return {
+    ...others,
     getState(path) {
       if (!path) return getState()
       assertPath(path)
       return getState()[path]
     },
     dispatch,
-    subscribe,
+    injectArgs(newInjectArgsFn) {
+      injectArgsFn = newInjectArgsFn
+    },
     getPathMethods(path) {
       assertPath(path)
       return methods[path]
@@ -112,7 +132,7 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
       if (!fns[type]) throw new Error(`Unknown ${set} ${type} in ${path}.`)
       return fns[type](...args)
     },
-    createPath(path, { state, getters = {}, setters = {}, actions = {} }) {
+    createPath(path, { initialState, getters = {}, setters = {}, actions = {} }) {
       if (methods[path]) throw new Error(`path ${path} is defined before.`)
       // Inline "this" for createMiddleware dispatch
       const currentDispatch = this.dispatch
@@ -120,13 +140,17 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
       methods[path] = {
         setters: mapValues(setters, (fn, key) => (...args) => currentDispatch({ type: `${path}${SPLITER}${key}`, payload: args })),
         getters: mapValues(getters, fn => (...args) => fn(getArgs(path), ...args)),
-        actions: mapValues(actions, fn => (...args) => batchedUpdates(() => fn(getArgs(path, true), ...args))),
+      }
+      if (process.env.NODE_ENV !== 'production') {
+        methods[path].actions = createStackActions(path, actions)
+      } else {
+        methods[path].actions = mapValues(actions, fn => (...args) => batchedUpdates(() => fn(getArgs(path, true), ...args)))
       }
       dispatch({
         type: ActionTypes.UPDATE_PATH,
         payload: [
           path,
-          state,
+          typeof initialState === 'function' ? initialState() : initialState,
         ],
       })
     },

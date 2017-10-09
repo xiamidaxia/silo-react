@@ -64,4 +64,32 @@ describe('createSiloStore', () => {
     noChange()
     expect(times).toBe(6)
   })
+  it('injectArgs', () => {
+    const context = {}
+    const store = createSiloStore()
+    store.injectArgs(() => ({ context }))
+    store.createPath('test', {
+      getters: {
+        getContext: ({ context }) => context
+      }
+    })
+    expect(store.exec('get:test/getContext')).toBe(context)
+  })
+  it('action stack', () => {
+    const store = createSiloStore()
+    store.createPath('test', {
+      actions: {
+        act1({ actions }) {
+          return actions.act2()
+        },
+        act2({ actions }) {
+          return actions.act3()
+        },
+        act3({ __actionStack }) {
+          return __actionStack
+        }
+      }
+    })
+    console.log(store.exec('action:test/act1'))
+  })
 })
