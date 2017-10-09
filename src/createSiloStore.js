@@ -22,6 +22,7 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
   }
   const methods = {}
   const settersMap = {}
+  const actionsMap = {}
   let injectArgsFn = defaultInjectArgsFn
   function assertPath(path) {
     if (!methods[path]) throw new Error(`Unknown path ${path}.`)
@@ -80,10 +81,11 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
   function createStackActions(path, actions) {
     const injectStackArgs = (stack, parentAction) => {
       const injectArgs = getArgs(path, true)
+      stack = stack.concat(parentAction)
       return {
         ...injectArgs,
-        __actionStack: stack.concat(parentAction),
-        actions: mapValues(methods[path].actions, (fn, name) => (...args) => batchedUpdates(() => fn(injectStackArgs(stack, name), ...args)))
+        __actionStack: stack,
+        actions: mapValues(actionsMap[path], (fn, name) => (...args) => batchedUpdates(() => fn(injectStackArgs(stack, name), ...args))),
       }
     }
     return mapValues(actions, (fn, name) => (...args) => batchedUpdates(() => fn(injectStackArgs([path], name), ...args)))
@@ -137,6 +139,7 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
       // Inline "this" for createMiddleware dispatch
       const currentDispatch = this.dispatch
       settersMap[path] = setters
+      actionsMap[path] = actions
       methods[path] = {
         setters: mapValues(setters, (fn, key) => (...args) => currentDispatch({ type: `${path}${SPLITER}${key}`, payload: args })),
         getters: mapValues(getters, fn => (...args) => fn(getArgs(path), ...args)),

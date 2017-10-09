@@ -77,7 +77,7 @@ describe('createSiloStore', () => {
   })
   it('action stack', () => {
     const store = createSiloStore()
-    store.createPath('test', {
+    store.createPath('myPath', {
       actions: {
         act1({ actions }) {
           return actions.act2()
@@ -90,6 +90,6 @@ describe('createSiloStore', () => {
         }
       }
     })
-    console.log(store.exec('action:test/act1'))
+    expect(store.exec('action:myPath/act1')).toEqual(['myPath', 'act1', 'act2', 'act3'])
   })
 })
