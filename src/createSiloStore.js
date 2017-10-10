@@ -1,5 +1,4 @@
 import reduxCreateStore from 'redux/lib/createStore'
-import uuid from 'uuid'
 import { batchedUpdates } from './batchedUpdates'
 import { mapValues } from './utils'
 
@@ -79,6 +78,7 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
     return store
   }
 
+  let stackId = 0
   function createStackActions(path, actions) {
     const injectStackArgs = (stack, parentAction) => {
       const injectArgs = getArgs(path, true)
@@ -89,7 +89,7 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
         actions: mapValues(actionsMap[path], (fn, name) => (...args) => batchedUpdates(() => fn(injectStackArgs(stack, name), ...args))),
       }
     }
-    return mapValues(actions, (fn, name) => (...args) => batchedUpdates(() => fn(injectStackArgs([`${path}@${uuid()}`], name), ...args)))
+    return mapValues(actions, (fn, name) => (...args) => batchedUpdates(() => fn(injectStackArgs([`${path}@${++stackId}`], name), ...args)))
   }
 
   // create redux store
