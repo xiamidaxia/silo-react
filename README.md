@@ -86,7 +86,7 @@ store.createPath('myPath', {
     }
   }
 })
-expect(store.exec('action:myPath/act1')).toEqual(['myPath', 'act1', 'act2', 'act3'])
+expect(store.exec('action:myPath/act1')).toEqual(['myPath@3eb8ca17-113f-4dd7-abd0-b63e0b83e370', 'act1', 'act2', 'act3'])
 ```
 
 ## Inject context arguments

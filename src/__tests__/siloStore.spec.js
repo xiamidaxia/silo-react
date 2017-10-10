@@ -90,6 +90,8 @@ describe('createSiloStore', () => {
         }
       }
     })
-    expect(store.exec('action:myPath/act1')).toEqual(['myPath', 'act1', 'act2', 'act3'])
+    const stack = store.exec('action:myPath/act1')
+    expect(stack.slice(1)).toEqual(['act1', 'act2', 'act3'])
+    expect(stack[0].split('@')[0]).toEqual('myPath')
   })
 })
