@@ -1,11 +1,67 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`connect connect nested 1`] = `
+<div>
+  <div>
+    <span>
+      count: 
+      0
+      /
+      0
+    </span>
+    <button
+      onClick={[Function]}
+    >
+      button
+    </button>
+  </div>
+  <button
+    onClick={[Function]}
+  >
+    button
+  </button>
+</div>
+`;
+
+exports[`connect connect nested 2`] = `
+<div>
+  <div>
+    <span>
+      count: 
+      1
+      /
+      0
+    </span>
+    <button
+      onClick={[Function]}
+    >
+      button
+    </button>
+  </div>
+  <button
+    onClick={[Function]}
+  >
+    button
+  </button>
+</div>
+`;
+
+exports[`connect connect nested 3`] = `
+<div>
+  <button
+    onClick={[Function]}
+  >
+    button
+  </button>
+</div>
+`;
+
 exports[`connect create connect 1`] = `
 <div>
   <span>
     count: 
     0
-    : 
+    /
     0
   </span>
   <button
@@ -21,7 +77,7 @@ exports[`connect create connect 2`] = `
   <span>
     count: 
     1
-    : 
+    /
     1
   </span>
   <button

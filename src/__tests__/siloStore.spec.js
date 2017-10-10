@@ -35,6 +35,7 @@ describe('createSiloStore', () => {
     })
     expect(store.getState()).toEqual({ test: { count: 0 }, empty: {} })
     expect(() => addTestPath(store)).toThrow(/defined before/)
+    expect(() => store.exec('set:test/unknown')).toThrow(/Unknown set/)
     store.exec('set:test/noChange')
     expect(times).toBe(1)
     store.exec('set:test/change', 1)
@@ -78,6 +79,17 @@ describe('createSiloStore', () => {
   it('action stack', () => {
     const store = createSiloStore()
     store.createPath('myPath', {
+      state: {
+        setterStack: '',
+      },
+      setters: {
+        set: ({ state, __actionStack }) => {
+          return {
+            ...state,
+            setterStack: __actionStack,
+          }
+        }
+      },
       actions: {
         act1({ actions }) {
           return actions.act2()
@@ -85,7 +97,8 @@ describe('createSiloStore', () => {
         act2({ actions }) {
           return actions.act3()
         },
-        act3({ __actionStack }) {
+        act3({ __actionStack, setters }) {
+          setters.set()
           return __actionStack
         }
       }
@@ -93,5 +106,6 @@ describe('createSiloStore', () => {
     const stack = store.exec('action:myPath/act1')
     expect(stack.slice(1)).toEqual(['act1', 'act2', 'act3'])
     expect(stack[0].split('@')[0]).toEqual('myPath')
+    expect(store.getState('myPath').setterStack.slice(1)).toEqual(['act1', 'act2', 'act3', 'set'])
   })
 })

@@ -1,5 +1,5 @@
-export function addTestPath(store) {
-  store.createPath('test', {
+export function addTestPath(store, name = 'test') {
+  store.createPath(name, {
     initialState: () => ({ count: 0 }),
     getters: {
       getCount: ({ state }) => state.count,

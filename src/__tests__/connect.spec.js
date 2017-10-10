@@ -7,7 +7,7 @@ describe('connect', () => {
   it('create connect', () => {
     const Demo = connect('test')(({ state, getters, setters }) => (
       <div>
-        <span>count: {state.count}: {getters.getCount()}</span>
+        <span>count: {state.count}/{getters.getCount()}</span>
         <button onClick={() => setters.change()}>button</button>
       </div>
     ))
@@ -47,5 +47,33 @@ describe('connect', () => {
     component.unmount()
     store.exec('set:test/change')
     expect(renderTimes).toBe(4)
+  })
+  it('connect nested', () => {
+    const Demo = connect('test1')(({ state, setters, parentCount }) => (
+      <div>
+        <span>count: {parentCount}/{state.count}</span>
+        <button onClick={() => setters.change()}>button</button>
+      </div>
+    ))
+    const Demo2 = connect('test2')(({ state, setters }) => (
+      <div>
+        { state.count === 2 ? null : <Demo parentCount={state.count} /> }
+        <button onClick={() => setters.change()}>button</button>
+      </div>
+    ))
+    const store = createSiloStore()
+    addTestPath(store, 'test1')
+    addTestPath(store, 'test2')
+    const component = renderer.create(
+      <Provider store={store}>
+        <Demo2 />
+      </Provider>
+    )
+    const tree = component.toJSON()
+    expect(tree).toMatchSnapshot()
+    tree.children[1].props.onClick()
+    expect(component.toJSON()).toMatchSnapshot()
+    tree.children[1].props.onClick()
+    expect(component.toJSON()).toMatchSnapshot()
   })
 })
