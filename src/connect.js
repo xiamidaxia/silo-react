@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import hoistStatics from 'hoist-non-react-statics'
 import { readyToPerform } from './batchedUpdates'
+import { shallowEqual } from './utils'
 import { storeShape } from './Provider'
 
 function getDisplayName(WrappedComponent) {
@@ -29,6 +30,9 @@ export default function connect(path, mergeToProps, siloStore) {
       }
       componentWillMount() {
         this.trySubscribe()
+      }
+      shouldComponentUpdate(nextProps, state) {
+        return state.storeState !== this.state.storeState || !shallowEqual(nextProps, this.props)
       }
       componentWillUnmount() {
         this.tryUnsubscribe()
