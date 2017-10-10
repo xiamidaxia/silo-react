@@ -72,6 +72,7 @@ const store = applyMiddleware(logger)(createSiloStore)()
 ## Global exec path methods
 
 ```jsx harmony
+store.getState('todos') // Get "todos" state
 store.exec('action:todos/fetchList', ...params) // exec action with params
 store.exec('get:todos/getCount', ...params) // exec getter
 store.exec('set:todos/add', ...params) // exec setter
