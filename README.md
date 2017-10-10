@@ -69,6 +69,14 @@ const logger = s => next => action => {
 const store = applyMiddleware(logger)(createSiloStore)()
 ```
 
+## Global exec path methods
+
+```jsx harmony
+store.exec('action:todos/fetchList', ...params) // exec action with params
+store.exec('get:todos/getCount', ...params) // exec getter
+store.exec('set:todos/add', ...params) // exec setter
+```
+
 ## Action stack in development
 
 ```jsx harmony
