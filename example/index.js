@@ -10,10 +10,10 @@ store.createPath('todos', {
       list: [],
     }
   },
-  getters: {
-    getCount: ({ state }) => state.list.length,
+  get: {
+    count: ({ state }) => state.list.length,
   },
-  setters: {
+  set: {
     add({ state }) {
       return {
         ...state,
@@ -21,22 +21,22 @@ store.createPath('todos', {
       }
     }
   },
-  actions: {
-    async fetchList({ setters }) {
-      return new Promise(res => setTimeout(() => setters.add()), 10)
+  action: {
+    async fetchList({ set }) {
+      return new Promise(res => setTimeout(() => set.add()), 10)
     }
   },
 })
 
 class Todos extends React.Component {
   componentDidMount() {
-    this.props.actions.fetchList()
+    this.props.action.fetchList()
   }
   render() {
     return <div>
-      <h2>Todos ({this.props.getters.getCount()})</h2>
+      <h2>Todos ({this.props.get.count()})</h2>
       <ul>{this.props.state.list.map(item => <li key={item.id}>{item.title}</li>)}</ul>
-      <button onClick={() => this.props.setters.add()}>Add</button>
+      <button onClick={() => this.props.set.add()}>Add</button>
     </div>
   }
 }

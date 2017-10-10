@@ -1,17 +1,17 @@
 export function addTestPath(store, name = 'test') {
   store.createPath(name, {
     initialState: () => ({ count: 0 }),
-    getters: {
+    get: {
       getCount: ({ state }) => state.count,
     },
-    actions: {
-      mulitiChange({ setters, getters }) {
-        setters.change(getters.getCount())
-        setters.change(getters.getCount())
-        setters.change(getters.getCount())
+    action: {
+      mulitiChange({ set, get }) {
+        set.change(get.getCount())
+        set.change(get.getCount())
+        set.change(get.getCount())
       },
     },
-    setters: {
+    set: {
       noChange({ state }) {
         return state
       },

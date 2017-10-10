@@ -61,7 +61,7 @@ describe('createSiloStore', () => {
     store.exec('action:test/mulitiChange')
     store.exec('reset:test', { count: 0 })
     expect(times).toBe(5)
-    const noChange = store.getPathMethods('test').setters.noChange
+    const noChange = store.getPathMethods('test').set.noChange
     noChange()
     expect(times).toBe(6)
   })
@@ -70,7 +70,7 @@ describe('createSiloStore', () => {
     const store = createSiloStore()
     store.injectArgs(() => ({ context }))
     store.createPath('test', {
-      getters: {
+      get: {
         getContext: ({ context }) => context
       }
     })
@@ -82,7 +82,7 @@ describe('createSiloStore', () => {
       state: {
         setterStack: '',
       },
-      setters: {
+      set: {
         set: ({ state, __actionStack }) => {
           return {
             ...state,
@@ -90,15 +90,15 @@ describe('createSiloStore', () => {
           }
         }
       },
-      actions: {
-        act1({ actions }) {
-          return actions.act2()
+      action: {
+        act1({ action }) {
+          return action.act2()
         },
-        act2({ actions }) {
-          return actions.act3()
+        act2({ action }) {
+          return action.act3()
         },
-        act3({ __actionStack, setters }) {
-          setters.set()
+        act3({ __actionStack, set }) {
+          set.set()
           return __actionStack
         }
       }

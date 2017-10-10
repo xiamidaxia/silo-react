@@ -20,10 +20,10 @@ store.createPath('todos', {
       list: [],
     }
   },
-  getters: {
-    getCount: ({ state }) => state.list.length,
+  get: {
+    count: ({ state }) => state.list.length,
   },
-  setters: {
+  set: {
     add({ state }) {
       return {
         ...state,
@@ -31,22 +31,22 @@ store.createPath('todos', {
       }
     }
   },
-  actions: {
-    async fetchList({ setters }) {
-      return new Promise(res => setTimeout(() => setters.add()), 10)
+  action: {
+    async fetchList({ set }) {
+      return new Promise(res => setTimeout(() => set.add()), 10)
     }
   },
 })
 
 class Todos extends React.Component {
   componentDidMount() {
-    this.props.actions.fetchList()
+    this.props.action.fetchList()
   }
   render() {
     return <div>
-      <h2>Todos ({this.props.getters.getCount()})</h2>
+      <h2>Todos ({this.props.get.count()})</h2>
       <ul>{this.props.state.list.map(item => <li key={item.id}>{item.title}</li>)}</ul>
-      <button onClick={() => this.props.setters.add()}>Add</button>
+      <button onClick={() => this.props.set.add()}>Add</button>
     </div>
   }
 }
@@ -74,8 +74,8 @@ const store = applyMiddleware(logger)(createSiloStore)()
 ```jsx harmony
 store.getState('todos') // Get "todos" state
 store.exec('action:todos/fetchList', ...params) // exec action with params
-store.exec('get:todos/getCount', ...params) // exec getter
-store.exec('set:todos/add', ...params) // exec setter
+store.exec('get:todos/count', ...params) // exec get
+store.exec('set:todos/add', ...params) // exec set
 ```
 
 ## Action stack in development
@@ -83,12 +83,12 @@ store.exec('set:todos/add', ...params) // exec setter
 ```jsx harmony
 const store = createSiloStore()
 store.createPath('myPath', {
-  actions: {
-    act1({ actions }) {
-      return actions.act2()
+  action: {
+    act1({ action }) {
+      return action.act2()
     },
-    act2({ actions }) {
-      return actions.act3()
+    act2({ action }) {
+      return action.act3()
     },
     act3({ __actionStack }) {
       return __actionStack
@@ -109,7 +109,7 @@ store.injectArgs(() => {
 })
 
 store.createPath('myPath', {
-  actions: {
+  action: {
     act({ myContext }) {
        console.log(myContext) // my context
     }

@@ -5,10 +5,10 @@ import { addTestPath } from './utils'
 
 describe('connect', () => {
   it('create connect', () => {
-    const Demo = connect('test')(({ state, getters, setters }) => (
+    const Demo = connect('test')(({ state, get, set }) => (
       <div>
-        <span>count: {state.count}/{getters.getCount()}</span>
-        <button onClick={() => setters.change()}>button</button>
+        <span>count: {state.count}/{get.getCount()}</span>
+        <button onClick={() => set.change()}>button</button>
       </div>
     ))
     const store = createSiloStore()
@@ -49,16 +49,16 @@ describe('connect', () => {
     expect(renderTimes).toBe(4)
   })
   it('connect nested', () => {
-    const Demo = connect('test1')(({ state, setters, parentCount }) => (
+    const Demo = connect('test1')(({ state, set, parentCount }) => (
       <div>
         <span>count: {parentCount}/{state.count}</span>
-        <button onClick={() => setters.change()}>button</button>
+        <button onClick={() => set.change()}>button</button>
       </div>
     ))
-    const Demo2 = connect('test2')(({ state, setters }) => (
+    const Demo2 = connect('test2')(({ state, set }) => (
       <div>
         { state.count === 2 ? null : <Demo parentCount={state.count} /> }
-        <button onClick={() => setters.change()}>button</button>
+        <button onClick={() => set.change()}>button</button>
       </div>
     ))
     const store = createSiloStore()

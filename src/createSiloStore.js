@@ -9,10 +9,10 @@ export const ActionTypes = {
   INIT: '@@redux/INIT',
 }
 const execMap = {
-  set: 'setters',
+  set: 'set',
   reset: 'reset',
-  get: 'getters',
-  action: 'actions',
+  get: 'get',
+  action: 'action',
 }
 
 const defaultInjectArgsFn = () => {}
@@ -22,8 +22,8 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
     throw new Error('InitData must be an object.')
   }
   const methods = {}
-  const settersMap = {}
-  const actionsMap = {}
+  const setMap = {}
+  const actionMap = {}
   let injectArgsFn = defaultInjectArgsFn
   function assertPath(path) {
     if (!methods[path]) throw new Error(`Unknown path ${path}.`)
@@ -51,7 +51,7 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
     } : {
       ...injectArgsFn(path),
       state: getState()[path],
-      getters: methods[path].getters,
+      get: methods[path].get,
     }
   }
 
@@ -65,11 +65,11 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
   function siloReducer(store, action) {
     const { path, setter, args, injectedArgs } = action.payload
     assertPath(path)
-    if (!settersMap[path][setter]) {
+    if (!setMap[path][setter]) {
       throw new Error(`Unknown setter "${setter}" in ${path}.`)
     }
     const state = store[path]
-    const newState = settersMap[path][setter](injectedArgs, ...args)
+    const newState = setMap[path][setter](injectedArgs, ...args)
     // check state
     if (state !== newState) {
       store = {
@@ -81,7 +81,7 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
   }
 
   let stackId = 0
-  function createStackActions(path, actions, currentDispatch) {
+  function createStackActions(path, action, currentDispatch) {
     const injectStackArgs = (stack, parentAction, all) => {
       const injectArgs = getArgs(path, all)
       stack = stack.concat(parentAction)
@@ -89,8 +89,8 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
         return {
           ...injectArgs,
           __actionStack: stack,
-          setters: mapValues(settersMap[path], (fn, setter) => (...args) => currentDispatch({ type: ActionTypes.SET_PATH, payload: { path, setter, args, injectedArgs: injectStackArgs(stack, setter) } })),
-          actions: mapValues(actionsMap[path], (fn, name) => (...args) => batchedUpdates(() => fn(injectStackArgs(stack, name, true), ...args))),
+          set: mapValues(setMap[path], (fn, setter) => (...args) => currentDispatch({ type: ActionTypes.SET_PATH, payload: { path, setter, args, injectedArgs: injectStackArgs(stack, setter) } })),
+          action: mapValues(actionMap[path], (fn, name) => (...args) => batchedUpdates(() => fn(injectStackArgs(stack, name, true), ...args))),
         }
       }
       return {
@@ -98,7 +98,7 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
         __actionStack: stack,
       }
     }
-    return mapValues(actions, (fn, name) => (...args) => batchedUpdates(() => fn(injectStackArgs([`${path}@${++stackId}`], name, true), ...args)))
+    return mapValues(action, (fn, name) => (...args) => batchedUpdates(() => fn(injectStackArgs([`${path}@${++stackId}`], name, true), ...args)))
   }
 
   // create redux store
@@ -144,20 +144,20 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
       if (!fns[type]) throw new Error(`Unknown ${set} ${type} in ${path}.`)
       return fns[type](...args)
     },
-    createPath(path, { initialState, getters = {}, setters = {}, actions = {} }) {
+    createPath(path, { initialState, get = {}, set = {}, action = {} }) {
       if (methods[path]) throw new Error(`path ${path} is defined before.`)
       // Inline "this" for createMiddleware dispatch
       const currentDispatch = this.dispatch
-      settersMap[path] = setters
-      actionsMap[path] = actions
+      setMap[path] = set
+      actionMap[path] = action
       methods[path] = {
-        setters: mapValues(setters, (fn, setter) => (...args) => currentDispatch({ type: ActionTypes.SET_PATH, payload: { path, setter, args, injectedArgs: getArgs(path) } })),
-        getters: mapValues(getters, fn => (...args) => fn(getArgs(path), ...args)),
+        set: mapValues(set, (fn, setter) => (...args) => currentDispatch({ type: ActionTypes.SET_PATH, payload: { path, setter, args, injectedArgs: getArgs(path) } })),
+        get: mapValues(get, fn => (...args) => fn(getArgs(path), ...args)),
       }
       if (process.env.NODE_ENV !== 'production') {
-        methods[path].actions = createStackActions(path, actions, currentDispatch)
+        methods[path].action = createStackActions(path, action, currentDispatch)
       } else {
-        methods[path].actions = mapValues(actions, fn => (...args) => batchedUpdates(() => fn(getArgs(path, true), ...args)))
+        methods[path].action = mapValues(action, fn => (...args) => batchedUpdates(() => fn(getArgs(path, true), ...args)))
       }
       dispatch({
         type: ActionTypes.UPDATE_PATH,

@@ -1,6 +1,6 @@
 {
   "name": "silo-react",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "React state manager based on redux",
   "main": "lib/index.js",
   "scripts": {
