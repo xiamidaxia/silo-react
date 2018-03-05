@@ -66,7 +66,7 @@ const logger = s => next => action => {
   console.log(action)
   return next(action)
 }
-const store = applyMiddleware(logger)(createSiloStore)()
+const store = createSiloStore({}, applyMiddleware(logger)(createStore))
 ```
 
 ## Global exec path methods

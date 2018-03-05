@@ -55,15 +55,16 @@ describe('createSiloStore', () => {
       times++
       return next(action)
     }
-    const store = applyMiddleware(middleware)(createSiloStore)()
+    const store = createSiloStore({}, applyMiddleware(middleware)(createStore))
     addTestPath(store)
+    expect(times).toBe(1)
     store.exec('set:test/noChange')
     store.exec('action:test/mulitiChange')
     store.exec('reset:test', { count: 0 })
-    expect(times).toBe(5)
+    expect(times).toBe(6)
     const noChange = store.getPathMethods('test').set.noChange
     noChange()
-    expect(times).toBe(6)
+    expect(times).toBe(7)
   })
   it('injectArgs', () => {
     const context = {}
@@ -83,10 +84,10 @@ describe('createSiloStore', () => {
         setterStack: '',
       },
       set: {
-        set: ({ state, __actionStack }) => {
+        set: ({ state, execStack }) => {
           return {
             ...state,
-            setterStack: __actionStack,
+            execStack,
           }
         }
       },
@@ -97,15 +98,16 @@ describe('createSiloStore', () => {
         act2({ action }) {
           return action.act3()
         },
-        act3({ __actionStack, set }) {
+        act3({ execStack, set }) {
           set.set()
-          return __actionStack
+          return execStack
         }
-      }
+      },
+      useExecStack: true,
     })
     const stack = store.exec('action:myPath/act1')
     expect(stack.slice(1)).toEqual(['act1', 'act2', 'act3'])
     expect(stack[0].split('@')[0]).toEqual('myPath')
-    expect(store.getState('myPath').setterStack.slice(1)).toEqual(['act1', 'act2', 'act3', 'set'])
+    expect(store.getState('myPath').execStack.slice(1)).toEqual(['act1', 'act2', 'act3', 'set'])
   })
 })
