@@ -11,7 +11,7 @@ export const ActionTypes = {
   INIT: '@@redux/INIT',
 }
 const execKeys = ['set', 'reset', 'get', 'action']
-const defaultInjectArgsFn = () => {}
+const defaultInjectArgsFn = args => args
 
 /* eslint-disable no-use-before-define */
 export default function createSiloStore(initData = {}, createStore = reduxCreateStore) {
@@ -92,7 +92,6 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
 
   function getArgs(path, trackerStack, all) {
     const args = {
-      ...methods[path].injectArgs(path),
       trackerStack,
       state: getState()[path],
       get: mapValues(methods[path].get, (fn, key) => execMap.get(path, fn, key, trackerStack)),
@@ -101,7 +100,7 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
       args.set = mapValues(methods[path].set, (fn, key) => execMap.set(path, fn, key, trackerStack))
       args.action = mapValues(methods[path].action, (fn, key) => execMap.action(path, fn, key, trackerStack))
     }
-    return args
+    return methods[path].injectArgs(args)
   }
 
   return {

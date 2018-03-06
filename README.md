@@ -112,8 +112,9 @@ store.createPath('myPath', {
        console.log(myContext) // my context
     }
   },
-  injectArgs() {
+  injectArgs(defaultArgs) {
     return {
+      ...defaultArgs,
       myContext: { /* my context */}
     }
   },

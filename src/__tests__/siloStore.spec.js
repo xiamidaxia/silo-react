@@ -73,8 +73,8 @@ describe('createSiloStore', () => {
       get: {
         getContext: ({ context }) => context
       },
-      injectArgs() {
-        return { context }
+      injectArgs(args) {
+        return { ...args, context }
       },
     })
     expect(store.exec('get:test/getContext')).toBe(context)
