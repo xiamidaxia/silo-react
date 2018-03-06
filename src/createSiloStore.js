@@ -46,9 +46,9 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
   }
 
   function siloReducer(store, action) {
-    const { path, key, args, trackerStack } = action.payload
+    const { path, method, args, trackerStack } = action.payload
     const state = store[path]
-    const newState = methods[path].set[key](getArgs(path, trackerStack), ...args)
+    const newState = methods[path].set[method](getArgs(path, trackerStack), ...args)
     // check state
     if (state !== newState) {
       store = {
@@ -76,7 +76,7 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
       trackerStack = trackerStack || methods[path].tracker
       const { onSet } = methods[path]
       return (...args) => {
-        const payload = { path, key, args, trackerStack: trackerStack.add(path, 'set', key, args) }
+        const payload = { path, method: key, args, trackerStack: trackerStack.add(path, 'set', key, args) }
         const res = dispatch({ type: ActionTypes.SET_PATH, payload })
         if (onSet) onSet(payload)
         return res
