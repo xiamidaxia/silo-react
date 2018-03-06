@@ -128,14 +128,13 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
     },
     /**
      * @param {String} str like 'set:todos/addItem'
-     * @param {TrackerStack} stack
      * @param args
      * @returns {*}
      */
-    exec(str, stack, ...args) {
-      if (stack && !(stack instanceof TrackerStack)) {
-        args.unshift(stack)
-        stack = null
+    exec(str, ...args) {
+      let stack
+      if (args[0] instanceof TrackerStack) {
+        stack = args.shift()
       }
       const [key, typeStr] = str.split(':')
       if (execKeys.indexOf(key) === -1) throw new Error(`Unknown exec key ${key}.`)
