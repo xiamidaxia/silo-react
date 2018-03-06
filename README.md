@@ -90,12 +90,15 @@ store.createPath('myPath', {
     act2({ action }) {
       return action.act3()
     },
-    act3({ __actionStack }) {
-      return __actionStack
+    act3({ trackerStack }) {
+      return trackerStack.stack
     }
+  },
+  tracker({ path, type, method }) {
+    return `${type}:${path}/${method}`
   }
 })
-expect(store.exec('action:myPath/act1')).toEqual(['myPath@1', 'act1', 'act2', 'act3'])
+expect(store.exec('action:myPath/act1')).toEqual(["action:myPath/act1", "action:myPath/act2", "action:myPath/act3"])
 ```
 
 ## Inject context arguments
