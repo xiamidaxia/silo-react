@@ -31,6 +31,9 @@ store.createPath('todos', {
       }
     }
   },
+  onSet(payload) {
+    // payload with trackerStack
+  },
   action: {
     async fetchList({ set }) {
       return new Promise(res => setTimeout(() => set.add()), 10)

@@ -128,4 +128,31 @@ describe('createSiloStore', () => {
       ['get:myPath/get']
     )
   })
+  it('onSet with trackerStack', () => {
+    const store = createSiloStore()
+    let targetStacks = []
+    store.createPath('myPath', {
+      set: {
+        s1: ({ state }) => state,
+        s2: ({ state }) => state,
+      },
+      action: {
+        act1: ({ set }) => {
+          set.s1()
+          set.s2()
+        },
+      },
+      onSet(payload) {
+        targetStacks.push(payload.trackerStack.stack)
+      },
+      tracker({ path, type, method }) {
+        return `${type}:${path}/${method}`
+      }
+    })
+    store.exec('action:myPath/act1')
+    expect(targetStacks).toEqual([
+      ['action:myPath/act1', 'set:myPath/s1'],
+      ['action:myPath/act1', 'set:myPath/s2'],
+    ])
+  })
 })
