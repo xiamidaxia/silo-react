@@ -102,17 +102,17 @@ expect(store.exec('action:myPath/act1')).toEqual(['myPath@1', 'act1', 'act2', 'a
 
 ```jsx
 const store = createSiloStore()
-store.injectArgs(() => {
-  return {
-    myContext: { /* my context */}
-  }
-})
 
 store.createPath('myPath', {
   action: {
     act({ myContext }) {
        console.log(myContext) // my context
     }
-  }
+  },
+  injectArgs() {
+    return {
+      myContext: { /* my context */}
+    }
+  },
 })
 ```

@@ -1,23 +1,7 @@
 import reduxCreateStore from 'redux/lib/createStore'
 import { batchedUpdates } from './batchedUpdates'
 import { mapValues } from './utils'
-
-let stackId = 0
-export class TrackerStack {
-  constructor() {
-    this.id = stackId++
-    this.stack = []
-  }
-  push(item) {
-    return this.stack.push(item)
-  }
-  pop(item) {
-    return this.stack.pop(item)
-  }
-  size() {
-    return this.stack.length
-  }
-}
+import TrackerStack from './TrackerStack'
 
 export const SPLITER = '/'
 export const ActionTypes = {
@@ -26,50 +10,31 @@ export const ActionTypes = {
   SET_PATH: '@@silo/PATH_SET',
   INIT: '@@redux/INIT',
 }
-const execMap = {
-  set: 'set',
-  reset: 'reset',
-  get: 'get',
-  action: 'action',
-}
-
+const execKeys = ['set', 'reset', 'get', 'action']
 const defaultInjectArgsFn = () => {}
 
+/* eslint-disable no-use-before-define */
 export default function createSiloStore(initData = {}, createStore = reduxCreateStore) {
   if (typeof initData !== 'object') {
     throw new Error('InitData must be an object.')
   }
   const methods = {}
-  const setMap = {}
-  const actionMap = {}
-  let injectArgsFn = defaultInjectArgsFn
+
   function assertPath(path) {
     if (!methods[path]) throw new Error(`Unknown path ${path}.`)
   }
+
   function normalizeType(str) {
     str = str.split(SPLITER)
     if (str.length === 1) {
       return {
         path: str.join(SPLITER),
-        type: '',
+        method: '',
       }
     }
     return {
       path: str.slice(0, -1).join(SPLITER),
-      type: str[str.length - 1],
-    }
-  }
-
-  function getArgs(path, all) {
-    /* eslint-disable no-use-before-define */
-    return all ? {
-      ...injectArgsFn(path),
-      state: getState()[path],
-      ...methods[path],
-    } : {
-      ...injectArgsFn(path),
-      state: getState()[path],
-      get: methods[path].get,
+      method: str[str.length - 1],
     }
   }
 
@@ -81,13 +46,9 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
   }
 
   function siloReducer(store, action) {
-    const { path, setter, args, injectedArgs } = action.payload
-    assertPath(path)
-    if (!setMap[path][setter]) {
-      throw new Error(`Unknown setter "${setter}" in ${path}.`)
-    }
+    const { path, key, args, trackerStack } = action.payload
     const state = store[path]
-    const newState = setMap[path][setter](injectedArgs, ...args)
+    const newState = methods[path].set[key](getArgs(path, trackerStack), ...args)
     // check state
     if (state !== newState) {
       store = {
@@ -96,26 +57,6 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
       }
     }
     return store
-  }
-
-  function createStackActions(path, action, currentDispatch) {
-    const injectStackArgs = (stack, parentAction, all) => {
-      const injectArgs = getArgs(path, all)
-      stack = stack.concat(parentAction)
-      if (all) {
-        return {
-          ...injectArgs,
-          execStack: stack,
-          set: mapValues(setMap[path], (fn, setter) => (...args) => currentDispatch({ type: ActionTypes.SET_PATH, payload: { path, setter, args, injectedArgs: injectStackArgs(stack, setter) } })),
-          action: mapValues(actionMap[path], (fn, name) => (...args) => batchedUpdates(() => fn(injectStackArgs(stack, name, true), ...args))),
-        }
-      }
-      return {
-        ...injectArgs,
-        execStack: stack,
-      }
-    }
-    return mapValues(action, (fn, name) => (...args) => batchedUpdates(() => fn(injectStackArgs([`${path}@${++stackId}`], name, true), ...args)))
   }
 
   // create redux store
@@ -130,6 +71,38 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
         return store
     }
   }, initData)
+  const execMap = {
+    set(path, fn, key, trackerStack) {
+      trackerStack = trackerStack || methods[path].tracker
+      return (...args) => dispatch({ type: ActionTypes.SET_PATH, payload: { path, key, args, trackerStack: trackerStack.add(path, 'set', key, args) } })
+    },
+    get(path, fn, key, trackerStack) {
+      trackerStack = trackerStack || methods[path].tracker
+      return (...args) => fn(getArgs(path, trackerStack.add(path, 'get', key, args)), ...args)
+    },
+    action(path, fn, key, trackerStack) {
+      trackerStack = trackerStack || methods[path].tracker
+      return (...args) => batchedUpdates(() => fn(getArgs(path, trackerStack.add(path, 'action', key, args), true), ...args))
+    },
+  }
+
+  function execMethod(path, fn, key, trackerStack, type) {
+    return execMap[type](path, fn, key, trackerStack)
+  }
+
+  function getArgs(path, trackerStack, all) {
+    const args = {
+      ...methods[path].injectArgs(path),
+      trackerStack,
+      state: getState()[path],
+      get: mapValues(methods[path].get, (fn, key) => execMap.get(path, fn, key, trackerStack)),
+    }
+    if (all) {
+      args.set = mapValues(methods[path].set, (fn, key) => execMap.set(path, fn, key, trackerStack))
+      args.action = mapValues(methods[path].action, (fn, key) => execMap.action(path, fn, key, trackerStack))
+    }
+    return args
+  }
 
   return {
     ...others,
@@ -139,15 +112,17 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
       return getState()[path]
     },
     dispatch,
-    injectArgs(newInjectArgsFn) {
-      injectArgsFn = newInjectArgsFn
-    },
     getPathMethods(path) {
       assertPath(path)
-      return methods[path]
+      const pathMethods = methods[path]
+      return {
+        get: mapValues(pathMethods.get, (fn, key) => execMap.get(path, fn, key, pathMethods.stack)),
+        set: mapValues(pathMethods.set, (fn, key) => execMap.set(path, fn, key, pathMethods.stack)),
+        action: mapValues(pathMethods.action, (fn, key) => execMap.action(path, fn, key, pathMethods.stack)),
+      }
     },
     /**
-     * @param {String} name like 'set:todos/addItem'
+     * @param {String} str like 'set:todos/addItem'
      * @param {TrackerStack} stack
      * @param args
      * @returns {*}
@@ -157,28 +132,18 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
         args.unshift(stack)
         stack = null
       }
-      const [set, typeStr] = str.split(':')
-      if (!execMap[set]) throw new Error(`Unknown exec key ${set}.`)
-      if (set === 'reset') return dispatch({ type: ActionTypes.RESET_PATH, payload: { path: typeStr, state: args[0] } })
-      const { path, type } = normalizeType(typeStr)
+      const [key, typeStr] = str.split(':')
+      if (execKeys.indexOf(key) === -1) throw new Error(`Unknown exec key ${key}.`)
+      if (key === 'reset') return dispatch({ type: ActionTypes.RESET_PATH, payload: { path: typeStr, state: args[0] } })
+      const { path, method } = normalizeType(typeStr)
       assertPath(path)
-      const fns = methods[path][execMap[set]]
-      if (!fns[type]) throw new Error(`Unknown ${set} ${type} in ${path}.`)
-      return fns[type](...args)
+      const fn = methods[path][key][method]
+      if (!fn) throw new Error(`Unknown ${key}:${path}/${method}.`)
+      return execMethod(path, fn, method, stack, key)(...args)
     },
-    createPath(path, { initialState, get = {}, set = {}, action = {}, useExecStack = false }) {
+    createPath(path, { initialState, get = {}, set = {}, action = {}, injectArgs = defaultInjectArgsFn, tracker }) {
       if (methods[path]) throw new Error(`path ${path} is defined before.`)
-      setMap[path] = set
-      actionMap[path] = action
-      methods[path] = {
-        set: mapValues(set, (fn, setter) => (...args) => dispatch({ type: ActionTypes.SET_PATH, payload: { path, setter, args, injectedArgs: getArgs(path) } })),
-        get: mapValues(get, fn => (...args) => fn(getArgs(path), ...args)),
-      }
-      if (useExecStack || process.env.NODE_ENV === 'development') {
-        methods[path].action = createStackActions(path, action, dispatch)
-      } else {
-        methods[path].action = mapValues(action, fn => (...args) => batchedUpdates(() => fn(getArgs(path, true), ...args)))
-      }
+      methods[path] = { set, get, action, tracker: new TrackerStack(tracker), injectArgs }
       dispatch({
         type: ActionTypes.INIT_PATH,
         payload: {

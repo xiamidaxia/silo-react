@@ -23,7 +23,7 @@ describe('createSiloStore', () => {
     expect(() => store.exec('sit:nown')).toThrow(/Unknown exec key /)
     addTestPath(store)
     expect(() => store.exec('set:test')).toThrow(/Unknown set/)
-    expect(() => store.exec('set:test/abc')).toThrow(/Unknown set abc/)
+    expect(() => store.exec('set:test/abc')).toThrow(/Unknown set:test\/abc/)
   })
   it('create and api', () => {
     const store = createSiloStore()
@@ -69,26 +69,33 @@ describe('createSiloStore', () => {
   it('injectArgs', () => {
     const context = {}
     const store = createSiloStore()
-    store.injectArgs(() => ({ context }))
     store.createPath('test', {
       get: {
         getContext: ({ context }) => context
-      }
+      },
+      injectArgs() {
+        return { context }
+      },
     })
     expect(store.exec('get:test/getContext')).toBe(context)
   })
-  it('action stack', () => {
+  it('tracker stack', () => {
     const store = createSiloStore()
     store.createPath('myPath', {
       state: {
-        setterStack: '',
+        trackerStack: '',
       },
       set: {
-        set: ({ state, execStack }) => {
+        set: ({ state, trackerStack }) => {
           return {
             ...state,
-            execStack,
+            trackerStack,
           }
+        }
+      },
+      get: {
+        get: ({ trackerStack }) => {
+          return trackerStack
         }
       },
       action: {
@@ -98,16 +105,27 @@ describe('createSiloStore', () => {
         act2({ action }) {
           return action.act3()
         },
-        act3({ execStack, set }) {
+        act3({ trackerStack, set }) {
           set.set()
-          return execStack
+          return trackerStack
         }
       },
-      useExecStack: true,
+      tracker({ path, type, method }) {
+        return `${type}:${path}/${method}`
+      }
     })
-    const stack = store.exec('action:myPath/act1')
-    expect(stack.slice(1)).toEqual(['act1', 'act2', 'act3'])
-    expect(stack[0].split('@')[0]).toEqual('myPath')
-    expect(store.getState('myPath').execStack.slice(1)).toEqual(['act1', 'act2', 'act3', 'set'])
+    const tracker = store.exec('action:myPath/act1')
+    expect(tracker.stack).toEqual(
+      ["action:myPath/act1", "action:myPath/act2", "action:myPath/act3"]
+    )
+    expect(tracker.parent.stack).toEqual(
+      ["action:myPath/act1", "action:myPath/act2"]
+    )
+    expect(store.getState('myPath').trackerStack.stack).toEqual(
+      ["action:myPath/act1", "action:myPath/act2", "action:myPath/act3", 'set:myPath/set']
+    )
+    expect(store.exec('get:myPath/get').stack).toEqual(
+      ['get:myPath/get']
+    )
   })
 })
