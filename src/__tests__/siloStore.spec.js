@@ -79,23 +79,23 @@ describe('createSiloStore', () => {
     })
     expect(store.exec('get:test/getContext')).toBe(context)
   })
-  it('tracker stack', () => {
+  it('tracker records', () => {
     const store = createSiloStore()
     store.createPath('myPath', {
       state: {
-        trackerStack: '',
+        tracker: null,
       },
       set: {
-        set: ({ state, trackerStack }) => {
+        set: ({ state, tracker }) => {
           return {
             ...state,
-            trackerStack,
+            tracker,
           }
         }
       },
       get: {
-        get: ({ trackerStack }) => {
-          return trackerStack
+        get: ({ tracker }) => {
+          return tracker
         }
       },
       action: {
@@ -105,9 +105,9 @@ describe('createSiloStore', () => {
         act2({ action }) {
           return action.act3()
         },
-        act3({ trackerStack, set }) {
+        act3({ tracker, set }) {
           set.set()
-          return trackerStack
+          return tracker
         }
       },
       tracker({ path, type, method }) {
@@ -115,20 +115,20 @@ describe('createSiloStore', () => {
       }
     })
     const tracker = store.exec('action:myPath/act1')
-    expect(tracker.stack).toEqual(
+    expect(tracker.records()).toEqual(
       ["action:myPath/act1", "action:myPath/act2", "action:myPath/act3"]
     )
-    expect(tracker.parent.stack).toEqual(
+    expect(tracker.parent.records()).toEqual(
       ["action:myPath/act1", "action:myPath/act2"]
     )
-    expect(store.getState('myPath').trackerStack.stack).toEqual(
+    expect(store.getState('myPath').tracker.records()).toEqual(
       ["action:myPath/act1", "action:myPath/act2", "action:myPath/act3", 'set:myPath/set']
     )
-    expect(store.exec('get:myPath/get').stack).toEqual(
+    expect(store.exec('get:myPath/get').records()).toEqual(
       ['get:myPath/get']
     )
   })
-  it('onSet with trackerStack', () => {
+  it('onSet with tracker', () => {
     const store = createSiloStore()
     let targetStacks = []
     store.createPath('myPath', {
@@ -143,14 +143,14 @@ describe('createSiloStore', () => {
         },
       },
       onSet(payload) {
-        targetStacks.push(payload.trackerStack.stack)
+        targetStacks.push(payload.tracker)
       },
       tracker({ path, type, method }) {
         return `${type}:${path}/${method}`
       }
     })
     store.exec('action:myPath/act1')
-    expect(targetStacks).toEqual([
+    expect(targetStacks.map(stack => stack.records())).toEqual([
       ['action:myPath/act1', 'set:myPath/s1'],
       ['action:myPath/act1', 'set:myPath/s2'],
     ])

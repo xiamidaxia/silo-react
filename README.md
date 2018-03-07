@@ -32,7 +32,7 @@ store.createPath('todos', {
     }
   },
   onSet(payload) {
-    // payload with trackerStack
+    // payload with tracker
   },
   action: {
     async fetchList({ set }) {
@@ -81,7 +81,7 @@ store.exec('get:todos/count', ...params) // exec get
 store.exec('set:todos/add', ...params) // exec set
 ```
 
-## Action stack in development
+## Action Records in development
 
 ```jsx harmony
 const store = createSiloStore()
@@ -93,8 +93,8 @@ store.createPath('myPath', {
     act2({ action }) {
       return action.act3()
     },
-    act3({ trackerStack }) {
-      return trackerStack.stack
+    act3({ tracker }) {
+      return tracker.records()
     }
   },
   tracker({ path, type, method }) {
