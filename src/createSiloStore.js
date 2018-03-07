@@ -73,7 +73,7 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
   }, initData)
   const execMap = {
     set(path, fn, key, trackerStack) {
-      trackerStack = trackerStack || methods[path].tracker
+      trackerStack = trackerStack || new TrackerStack(methods[path].tracker)
       const { onSet } = methods[path]
       return (...args) => {
         const payload = { path, method: key, args, trackerStack: trackerStack.add(path, 'set', key, args) }
@@ -83,11 +83,11 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
       }
     },
     get(path, fn, key, trackerStack) {
-      trackerStack = trackerStack || methods[path].tracker
+      trackerStack = trackerStack || new TrackerStack(methods[path].tracker)
       return (...args) => fn(getArgs(path, trackerStack.add(path, 'get', key, args)), ...args)
     },
     action(path, fn, key, trackerStack) {
-      trackerStack = trackerStack || methods[path].tracker
+      trackerStack = trackerStack || new TrackerStack(methods[path].tracker)
       return (...args) => batchedUpdates(() => fn(getArgs(path, trackerStack.add(path, 'action', key, args), true), ...args))
     },
   }
@@ -147,7 +147,7 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
     },
     createPath(path, { initialState, get = {}, set = {}, onSet, action = {}, injectArgs = defaultInjectArgsFn, tracker }) {
       if (methods[path]) throw new Error(`path ${path} is defined before.`)
-      methods[path] = { set, get, action, onSet, tracker: new TrackerStack(tracker), injectArgs }
+      methods[path] = { set, get, action, onSet, tracker, injectArgs }
       dispatch({
         type: ActionTypes.INIT_PATH,
         payload: {
