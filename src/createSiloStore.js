@@ -59,37 +59,9 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
     return store
   }
 
-  // create redux store
-  const { dispatch, getState, ...others } = createStore((store, action) => {
-    switch (action.type) {
-      case ActionTypes.INIT_PATH:
-      case ActionTypes.RESET_PATH:
-        return updatePathReducer(store, action)
-      case ActionTypes.SET_PATH:
-        return siloReducer(store, action)
-      default:
-        return store
-    }
-  }, initData)
-  const execMap = {
-    set(path, fn, key, tracker) {
-      tracker = tracker || methods[path].tracker
-      const { onSet } = methods[path]
-      return (...args) => {
-        const payload = { path, method: key, args, tracker: tracker.add(path, 'set', key, args) }
-        const res = dispatch({ type: ActionTypes.SET_PATH, payload })
-        if (onSet) onSet(payload)
-        return res
-      }
-    },
-    get(path, fn, key, tracker) {
-      tracker = tracker || methods[path].tracker
-      return (...args) => fn(getArgs(path, tracker.add(path, 'get', key, args)), ...args)
-    },
-    action(path, fn, key, tracker) {
-      tracker = tracker || methods[path].tracker
-      return (...args) => batchedUpdates(() => fn(getArgs(path, tracker.add(path, 'action', key, args), true), ...args))
-    },
+  function trackerAdd(tracker, record) {
+    const rule = methods[record.path].trackerRule
+    return tracker ? tracker.add(record) : new Tracker(rule, rule(record))
   }
 
   function execMethod(path, fn, key, tracker, type) {
@@ -107,6 +79,44 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
       args.action = mapValues(methods[path].action, (fn, key) => execMap.action(path, fn, key, tracker))
     }
     return methods[path].injectArgs(args)
+  }
+
+  // create redux store
+  const { dispatch, getState, ...others } = createStore((store, action) => {
+    switch (action.type) {
+      case ActionTypes.INIT_PATH:
+      case ActionTypes.RESET_PATH:
+        return updatePathReducer(store, action)
+      case ActionTypes.SET_PATH:
+        return siloReducer(store, action)
+      default:
+        return store
+    }
+  }, initData)
+
+  const execMap = {
+    set(path, fn, method, tracker) {
+      const { onSet } = methods[path]
+      return (...args) => {
+        tracker = trackerAdd(tracker, { path, method, type: 'set', args })
+        const payload = { path, method, args, tracker }
+        const res = dispatch({ type: ActionTypes.SET_PATH, payload })
+        if (onSet) onSet(payload)
+        return res
+      }
+    },
+    get(path, fn, method, tracker) {
+      return (...args) => {
+        tracker = trackerAdd(tracker, { path, method, type: 'get', args })
+        return fn(getArgs(path, tracker), ...args)
+      }
+    },
+    action(path, fn, method, tracker) {
+      return (...args) => batchedUpdates(() => {
+        tracker = trackerAdd(tracker, { path, method, type: 'action', args })
+        return fn(getArgs(path, tracker, true), ...args)
+      })
+    },
   }
 
   return {
@@ -145,9 +155,9 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
       if (!fn) throw new Error(`Unknown ${key}:${path}/${method}.`)
       return execMethod(path, fn, method, tracker, key)(...args)
     },
-    createPath(path, { initialState, get = {}, set = {}, onSet, action = {}, injectArgs = defaultInjectArgsFn, tracker }) {
+    createPath(path, { initialState, get = {}, set = {}, onSet, action = {}, injectArgs = defaultInjectArgsFn, tracker = () => {} }) {
       if (methods[path]) throw new Error(`path ${path} is defined before.`)
-      methods[path] = { set, get, action, onSet, tracker: new Tracker(tracker, null), injectArgs }
+      methods[path] = { set, get, action, onSet, trackerRule: tracker, injectArgs }
       dispatch({
         type: ActionTypes.INIT_PATH,
         payload: {

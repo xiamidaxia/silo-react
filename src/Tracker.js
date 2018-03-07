@@ -7,12 +7,12 @@ export default class Tracker {
     this.parent = parent || null
     this.rootTracker = parent ? parent.rootTracker : this
     this.rull = rull
-    this.record = record || null
+    this.record = record
     this.depth = parent ? parent.depth + 1 : 0
   }
-  add(path, type, method, args) {
+  add(data) {
     if (!this.rull) return this
-    const record = this.rull({ path, type, method, args }, this)
+    const record = this.rull(data, this)
     if (emptyRecord(record)) return this
     return new Tracker(this.rull, record, this)
   }
