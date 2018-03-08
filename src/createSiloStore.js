@@ -69,14 +69,15 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
   }
 
   function getArgs(path, tracker, all) {
+    const currentMethods = methods[path]
     const args = {
       tracker,
       state: getState()[path],
-      get: mapValues(methods[path].get, (fn, key) => execMap.get(path, fn, key, tracker)),
+      get: mapValues(currentMethods.get, (fn, key) => execMap.get(path, fn, key, tracker)),
     }
     if (all) {
-      args.set = mapValues(methods[path].set, (fn, key) => execMap.set(path, fn, key, tracker))
-      args.action = mapValues(methods[path].action, (fn, key) => execMap.action(path, fn, key, tracker))
+      args.set = mapValues(currentMethods.set, (fn, key) => execMap.set(path, fn, key, tracker))
+      args.action = mapValues(currentMethods.action, (fn, key) => execMap.action(path, fn, key, tracker))
     }
     return methods[path].injectArgs(args)
   }
@@ -95,25 +96,25 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
   }, initData)
 
   const execMap = {
-    set(path, fn, method, tracker) {
+    set(path, fn, method, injectTracker) {
       const { onSet } = methods[path]
       return (...args) => {
-        tracker = trackerAdd(tracker, { path, method, type: 'set', args })
+        const tracker = trackerAdd(injectTracker, { path, method, type: 'set', args })
         const payload = { path, method, args, tracker }
         const res = dispatch({ type: ActionTypes.SET_PATH, payload })
         if (onSet) onSet(payload)
         return res
       }
     },
-    get(path, fn, method, tracker) {
+    get(path, fn, method, injectTracker) {
       return (...args) => {
-        tracker = trackerAdd(tracker, { path, method, type: 'get', args })
+        const tracker = trackerAdd(injectTracker, { path, method, type: 'get', args })
         return fn(getArgs(path, tracker), ...args)
       }
     },
-    action(path, fn, method, tracker) {
+    action(path, fn, method, injectTracker) {
       return (...args) => batchedUpdates(() => {
-        tracker = trackerAdd(tracker, { path, method, type: 'action', args })
+        const tracker = trackerAdd(injectTracker, { path, method, type: 'action', args })
         return fn(getArgs(path, tracker, true), ...args)
       })
     },
@@ -127,7 +128,15 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
       return getState()[path]
     },
     dispatch,
-    getArgs,
+    getRenderArgsFn(path) {
+      const currentMethods = methods[path]
+      const propsCache = {
+        get: mapValues(currentMethods.get, (fn, key) => execMap.get(path, fn, key)),
+        set: mapValues(currentMethods.set, (fn, key) => execMap.set(path, fn, key)),
+        action: mapValues(currentMethods.action, (fn, key) => execMap.action(path, fn, key)),
+      }
+      return () => currentMethods.injectArgs({ ...propsCache, state: getState()[path] })
+    },
     /**
      * @param {String} str like 'set:todos/addItem'
      * @param args

@@ -26,6 +26,7 @@ export default function connect(path, mergeToProps, siloStore) {
         this.state = {
           storeState: this.siloStore.getState(path),
         }
+        this.getRenderArgs = this.siloStore.getRenderArgsFn(path)
       }
       componentWillMount() {
         this.trySubscribe()
@@ -67,7 +68,7 @@ export default function connect(path, mergeToProps, siloStore) {
         })
       }
       render() {
-        const props = mergeToPropsFn(this.siloStore.getArgs(path, null, true), this.props)
+        const props = mergeToPropsFn(this.getRenderArgs(), this.props)
         return <WrappedComponent {...props} />
       }
     }
