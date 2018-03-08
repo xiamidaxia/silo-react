@@ -19,6 +19,9 @@ export default class Tracker {
   length() {
     return (emptyRecord(this.rootTracker.record) ? 0 : 1) + this.depth
   }
+  isRoot() {
+    return !this.parent
+  }
   records() {
     const records = []
     let tracker = this
