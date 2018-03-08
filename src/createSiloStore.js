@@ -12,9 +12,10 @@ export const ActionTypes = {
 }
 const execKeys = ['set', 'reset', 'get', 'action']
 const defaultInjectArgsFn = args => args
+const defaultTrackerRule = () => {}
 
 /* eslint-disable no-use-before-define */
-export default function createSiloStore(initData = {}, createStore = reduxCreateStore) {
+export default function createSiloStore(initData = {}, createStore = reduxCreateStore, trackerRule = defaultTrackerRule) {
   if (typeof initData !== 'object') {
     throw new Error('InitData must be an object.')
   }
@@ -60,8 +61,7 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
   }
 
   function trackerAdd(tracker, record) {
-    const rule = methods[record.path].trackerRule
-    return tracker ? tracker.add(record) : new Tracker(rule, rule(record))
+    return tracker ? tracker.add(record) : new Tracker(trackerRule, trackerRule(record))
   }
 
   function execMethod(path, fn, key, tracker, type) {
@@ -155,9 +155,9 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
       if (!fn) throw new Error(`Unknown ${key}:${path}/${method}.`)
       return execMethod(path, fn, method, tracker, key)(...args)
     },
-    createPath(path, { initialState, get = {}, set = {}, onSet, action = {}, injectArgs = defaultInjectArgsFn, tracker = () => {} }) {
+    createPath(path, { initialState, get = {}, set = {}, onSet, action = {}, injectArgs = defaultInjectArgsFn }) {
       if (methods[path]) throw new Error(`path ${path} is defined before.`)
-      methods[path] = { set, get, action, onSet, trackerRule: tracker, injectArgs }
+      methods[path] = { set, get, action, onSet, injectArgs }
       dispatch({
         type: ActionTypes.INIT_PATH,
         payload: {

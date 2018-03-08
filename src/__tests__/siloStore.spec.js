@@ -2,6 +2,8 @@ import expect from 'expect'
 import { createSiloStore, createStore, applyMiddleware } from '../index'
 import { addTestPath, addEmptyPath } from './utils'
 
+const trackerRule = ({ path, type, method }) => `${type}:${path}/${method}`
+
 describe('createSiloStore', () => {
   it('as redux', () => {
     let success = false
@@ -80,7 +82,7 @@ describe('createSiloStore', () => {
     expect(store.exec('get:test/getContext')).toBe(context)
   })
   it('tracker records', () => {
-    const store = createSiloStore()
+    const store = createSiloStore({}, undefined, trackerRule)
     store.createPath('myPath', {
       state: {
         tracker: null,
@@ -110,9 +112,6 @@ describe('createSiloStore', () => {
           return tracker
         }
       },
-      tracker({ path, type, method }) {
-        return `${type}:${path}/${method}`
-      }
     })
     const tracker = store.exec('action:myPath/act1')
     expect(tracker.records()).toEqual(
@@ -129,7 +128,7 @@ describe('createSiloStore', () => {
     )
   })
   it('onSet with tracker', () => {
-    const store = createSiloStore()
+    const store = createSiloStore({}, undefined, trackerRule)
     let targetStacks = []
     store.createPath('myPath', {
       set: {

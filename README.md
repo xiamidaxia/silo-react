@@ -84,7 +84,8 @@ store.exec('set:todos/add', ...params) // exec set
 ## Action Records in development
 
 ```jsx harmony
-const store = createSiloStore()
+const trackerRule = ({ path, type, method }) => `${type}:${path}/${method}`
+const store = createSiloStore({}, undefined, trackerRule)
 store.createPath('myPath', {
   action: {
     act1({ action }) {
@@ -96,9 +97,6 @@ store.createPath('myPath', {
     act3({ tracker }) {
       return tracker.records()
     }
-  },
-  tracker({ path, type, method }) {
-    return `${type}:${path}/${method}`
   }
 })
 expect(store.exec('action:myPath/act1')).toEqual(["action:myPath/act1", "action:myPath/act2", "action:myPath/act3"])
