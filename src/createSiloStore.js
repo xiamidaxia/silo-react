@@ -127,15 +127,7 @@ export default function createSiloStore(initData = {}, createStore = reduxCreate
       return getState()[path]
     },
     dispatch,
-    getPathMethods(path) {
-      assertPath(path)
-      const pathMethods = methods[path]
-      return {
-        get: mapValues(pathMethods.get, (fn, key) => execMap.get(path, fn, key)),
-        set: mapValues(pathMethods.set, (fn, key) => execMap.set(path, fn, key)),
-        action: mapValues(pathMethods.action, (fn, key) => execMap.action(path, fn, key)),
-      }
-    },
+    getArgs,
     /**
      * @param {String} str like 'set:todos/addItem'
      * @param args

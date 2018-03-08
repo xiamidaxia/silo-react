@@ -26,7 +26,6 @@ export default function connect(path, mergeToProps, siloStore) {
         this.state = {
           storeState: this.siloStore.getState(path),
         }
-        this.storeMethods = this.siloStore.getPathMethods(path)
       }
       componentWillMount() {
         this.trySubscribe()
@@ -36,7 +35,6 @@ export default function connect(path, mergeToProps, siloStore) {
       }
       componentWillUnmount() {
         this.tryUnsubscribe()
-        this.storeMethods = null
       }
       trySubscribe() {
         if (!this.unsubscribe) {
@@ -69,10 +67,7 @@ export default function connect(path, mergeToProps, siloStore) {
         })
       }
       render() {
-        const props = mergeToPropsFn({
-          state: this.state.storeState,
-          ...this.storeMethods,
-        }, this.props)
+        const props = mergeToPropsFn(this.siloStore.getArgs(path, null, true), this.props)
         return <WrappedComponent {...props} />
       }
     }

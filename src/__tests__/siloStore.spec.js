@@ -64,9 +64,6 @@ describe('createSiloStore', () => {
     store.exec('action:test/mulitiChange')
     store.exec('reset:test', { count: 0 })
     expect(times).toBe(6)
-    const noChange = store.getPathMethods('test').set.noChange
-    noChange()
-    expect(times).toBe(7)
   })
   it('injectArgs', () => {
     const context = {}
