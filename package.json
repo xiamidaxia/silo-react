@@ -1,10 +1,9 @@
 {
   "name": "silo-react",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "React state manager based on redux",
   "main": "lib/index.js",
   "scripts": {
-    "start": "dora --plugins \"webpack,hmr,proxy,livereload\" --verbose",
     "build": "NODE_ENV=production atool-build",
     "babel-build": "make build",
     "test": "make test",
@@ -48,11 +47,6 @@
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-env": "^1.6.0",
     "coveralls": "^3.0.0",
-    "dora": "^0.4.5",
-    "dora-plugin-hmr": "^0.7.1",
-    "dora-plugin-livereload": "^0.6.0",
-    "dora-plugin-proxy": "^0.8.5",
-    "dora-plugin-webpack": "^1.0.0",
     "eslint": "^4.8.0",
     "eslint-config-airbnb": "^15.1.0",
     "eslint-plugin-babel": "^3.x",
