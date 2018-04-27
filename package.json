@@ -1,11 +1,10 @@
 {
   "name": "silo-react",
-  "version": "0.4.1",
+  "version": "0.4.0",
   "description": "React state manager based on redux",
   "main": "lib/index.js",
   "scripts": {
-    "build": "NODE_ENV=production atool-build",
-    "babel-build": "make build",
+    "build": "make build",
     "test": "make test",
     "test:watch": "make test-watch",
     "test:cover": "make test-cover",
@@ -37,7 +36,6 @@
     "redux": "^3.7.2"
   },
   "devDependencies": {
-    "atool-build": "^1.0.2",
     "autod": "^2.9.0",
     "babel-cli": "^6.26.0",
     "babel-eslint": "^7.2.1",
